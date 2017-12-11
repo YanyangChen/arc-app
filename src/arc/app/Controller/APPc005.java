@@ -109,6 +109,14 @@ public class APPc005 extends ACFaAppController {
 			
 			return i.purchase_order_no.compareTo(j.purchase_order_no);
 		}};
+	    Comparator<ARCmItemInventory> compare_po_with_remains = new Comparator<ARCmItemInventory>(){
+			
+			@Override
+			public int compare(ARCmItemInventory i,ARCmItemInventory j) {
+				
+				return i.purchase_order_no.compareTo(j.purchase_order_no);
+			}};
+		
    // @ACFgAuditKey String other_material;
     //@ACFgAuditKey BigDecimal unit_cost;
     
@@ -501,41 +509,107 @@ public class APPc005 extends ACFaAppController {
  											
  											
  											List<ARCmItemInventory> Invitems = APPc006.filter(ls);
- 											
+// 											WPconsumptionItemDao.deleteItem(newItem); //delete already inserted 'newitem'
  											do // consumption from inventory
 											{	
  												Invitems = APPc006.filter(Invitems);
- 												ARCmWPConsumptionItem consitems = newItem;
-												ARCmItemInventory mininv = Collections.min(Invitems,cii);
+// 												ARCmWPConsumptionItem consitems = newItem.getClass().newInstance();
+ 												
+ 												
+ 												ARCmWPConsumptionItem consitems = new ARCmWPConsumptionItem();
+ 												consitems.account_allocation = newItem.account_allocation;
+ 												consitems.consumption_form_no = newItem.consumption_form_no;
+// 												consitems.consumption_quantity = newItem.consumption_quantity;
+ 												consitems.input_date = newItem.input_date;
+ 												consitems.item_no = newItem.item_no;
+ 												consitems.programme_no = newItem.programme_no;
+ 												consitems.purchase_order_no = newItem.purchase_order_no;
+ 												consitems.re_used_indicator = newItem.re_used_indicator;
+ 												consitems.unit_cost = newItem.unit_cost;
+ 												consitems.created_at = newItem.created_at;
+ 												consitems.created_by = newItem.created_by;
+ 												consitems.modified_at = newItem.modified_at;
+ 												consitems.modified_by = newItem.modified_by;
+ 												
+ 												
+ 												
+												ARCmItemInventory mininv = Collections.min(Invitems,cii);//compares PO number
  												
  												if(cq <=APPc006.get_remaining(mininv))
  												{
+// 												newItem.consumption_quantity = new BigDecimal(cq);
+ 												//dangerous!! the following line's function was extracted from Dennis's memory, not document!!
+ 												ass.columns.put("consumption_quantity", new BigDecimal(cq));
+ 												
+ 												
+ 	 						            		System.out.println("cq <= APPc006.get_remaining(mininv) testing newItem.consumption_quantity ********" + newItem.consumption_quantity);
+// 	 						            		newItem.purchase_order_no = mininv.purchase_order_no;
+ 	 						            			
+ 													
  												mininv.consumed_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + cq);
  						            			cq = 0;
  						            			ItemInventoryDao.updateItem(mininv);
+// 						            			consitems.purchase_order_no = mininv.purchase_order_no;
+ 						            			
+ 						            			//delete already inserted 'newitem'
+ 						            			//then insert modified 'newitem'
+// 						            			WPconsumptionItemDao.insertItem(newItem);
  												}
  												
  												if(cq > APPc006.get_remaining(mininv))
  						            			{
  						            			//mininv.adjusted_quantity = new BigDecimal(0);
- 						            			cq = cq - APPc006.get_remaining(mininv);
+ 													
+ 												//assign the consumed remaining items to a new record container consitems
+ 													
+ 													Integer remain = APPc006.get_remaining(mininv);
+ 												//converting to big decimal without toString can be dangerous https://stackoverflow.com/questions/16216248/convert-java-number-to-bigdecimal-best-way
+ 													
+ 													consitems.consumption_quantity = new BigDecimal(remain.toString());
+ 												System.out.println("testing************************APPc006.get_remaining(mininv)" + APPc006.get_remaining(mininv));
+ 												System.out.println("testing************************consitems.consumption_quantity" + consitems.consumption_quantity);
+ 												System.out.println("testing************************remain.toString()" + remain.toString());
+ 												
+ 												//renew the consuming quantity after deduction
+ 						            			cq = cq - remain;
  						                			
+ 						            			//assign the consuming quantity after deduction to new item container
+// 						                		newItem.consumption_quantity = new BigDecimal(cq); //!! consitems and newItem may pointing the same object!
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing APPc006.get_remaining(mininv)*********" + APPc006.get_remaining(mininv));
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing newItem.consumption_quantity **********" 
+ 						                		+ newItem.consumption_quantity);
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing consitems.consumption_quantity *********" +
+ 						                		consitems.consumption_quantity);
+ 						                		consitems.unit_cost = mininv.unit_cost;
+ 						                		consitems.purchase_order_no = mininv.purchase_order_no;
+ 						                		
+ 						                		
+ 						                		
+ 						                		//update inventory record in loop
+ 						            			
+ 						            			
+ 						            			WPconsumptionItemDao.insertItem(consitems);
+ 						            			
+ 						            			
  						                		mininv.consumed_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + APPc006.get_remaining(mininv)); //set remaining to zero
  						                			
- 						                		consitems.consumption_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + APPc006.get_remaining(mininv));
- 						            			//update inventory record in loop
+// 						                		consitems.consumption_quantity = new BigDecimal(cq);
+ 						                		
+ 						                		
  						            			ItemInventoryDao.updateItem(mininv);
  						            			
  						            			//don't just update inventory here, update 'ITEM LIST' in appf005 
- 						            			WPconsumptionItemDao.updateItem(consitems);
+// 						            			WPconsumptionItemDao.updateItem(consitems);
  						            			}
 											}
 												//once consumption is finished, break the loop
 												while (cq != 0);
- 											
+ 												System.out.println("testing new item at the end of insert ********************" + newItem.consumption_quantity);
  											}
  											
 // 											System.out.println(ls.get(1));
+// 											newItem.consumption_quantity = new BigDecimal(999);
+ 											
  											return false;
 										}
 										// the following should also happen when insert
