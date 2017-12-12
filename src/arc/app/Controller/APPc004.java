@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 
+
 //import cal.aes.Model.AESmEventPlan;
 import acf.acf.Abstract.ACFaAppController;
 import acf.acf.Database.ACFdSQLAssDelete;
@@ -201,13 +202,14 @@ public class APPc004 extends ACFaAppController {
             @Override
             public boolean update(ARCmPOHeader oldItem, ARCmPOHeader newItem, ACFdSQLAssUpdate ass) throws Exception {
                 ass.setAfterExecute(new ACFiCallback() {
-                    @Override
+                    @SuppressWarnings("null")
+					@Override
                     public void callback() throws Exception {
-                        if (Inventoryamendments != null){
+                        if (Inventoryamendments.size() != 0 ){
                         	int rcount = 0;
                         	int rcount1 = 0;
                         	int rcount2 = 0;
-//                        	
+                        	System.out.println("testing List<ARCmItemInventory> InvAmend **************************" + Inventoryamendments + "Inventoryamendments.size()" + Inventoryamendments.size());
                         	List<ARCmItemInventory> InvAmend = Inventoryamendments;
                         	ACFdSQLAssSelect srch = new ACFdSQLAssSelect();
                         	//all receipt quantities should be added to "original item" as well as "item category +9999"
@@ -296,15 +298,27 @@ public class APPc004 extends ACFaAppController {
                                 ass.setCustomSQL("select d.item_no, d.purchase_order_no, d.unit_cost, im.material_type,"
                                 		+ " im.item_no, d.modified_at from arc_po_details d, arc_item_master im "
                                 		+ "where im.item_no = d.item_no "
-                                		+ "and im.material_type = '2' "
+//                                		+ "and im.material_type = '2' "
                                         + "and d.purchase_order_no = '%s' order by d.modified_at desc",InvAmend.get(0).purchase_order_no);
                                 
                                 List<ACFgRawModel> itemnos = ass.executeQuery(getConnection("ARCDB"));
-                                
-                            	catitemv2.unit_cost = (BigDecimal) itemnos.get(0).get("unit_cost"); //get unit cost from po
+                                System.out.println("tesing ************************************************* itemnos.get(0).get(unit_cost).toString()"+itemnos.get(0).get("unit_cost").toString());
+                            	if (itemnos.get(0).get("material_type").toString().equals("2"))
+                            	{
+                                catitemv2.unit_cost = new BigDecimal (itemnos.get(0).get("unit_cost").toString()); //get unit cost from po
                             	InvAmend.add(catitemv2);
-                            	System.out.println("tesing ************************************************* InvAmend"+InvAmend);
+                            	System.out.println("tesing ***get(\"unit_cost\")********************************************** 2"+InvAmend);
                                 ItemInventoryDao.saveItems(InvAmend);
+                                }
+                            	if (itemnos.get(0).get("material_type").toString().equals("1"))
+                            	{
+                                catitemv2.unit_cost = new BigDecimal (itemnos.get(0).get("unit_cost").toString()); //get unit cost from po
+                            	InvAmend.add(catitemv2);
+                            	System.out.println("tesing ***get(\"unit_cost\")********************************************** 1"+InvAmend);
+                            	 ItemInventoryDao.saveItems(InvAmend);
+//                            	ItemInventoryDao.updateItem(catitemv1, catitemv2);
+                                }
+//                                ItemInventoryDao.updateItem(catitemv1, catitemv2);
                             	}
 //                            	
                             }

@@ -11,6 +11,7 @@ import java.util.List;
 
 
 
+
 //The org.springframework.beans and org.springframework.context packages are the
 //basis for Spring Framework’s IoC container.
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,7 @@ import arc.apf.Service.ARCsLabourType;
 import arc.apf.Service.ARCsLocation;
 import arc.apf.Service.ARCsModel;
 import arc.apf.Service.ARCsOtherMaterial;
+import arc.apf.Service.ARCsPoHeader;
 import arc.apf.Service.ARCsProgrammeMaster;
 import arc.app.Static.APPtMapping;
 import arc.app.Controller.APPc006;
@@ -91,6 +93,7 @@ public class APPc005 extends ACFaAppController {
     @Autowired ACFsSecurity SecurityService;
     @Autowired ARCoItemInventory ItemInventoryDao;
     @Autowired ARCsItemInventory InventoryService;
+    @Autowired ARCsPoHeader PoHeaderService;
     @Autowired ARCsOtherMaterial OtherMaterialService;
     @Autowired ARCsLocation LocationService;
     @Autowired ARCsProgrammeMaster ProgrammeMasterService;
@@ -109,6 +112,14 @@ public class APPc005 extends ACFaAppController {
 			
 			return i.purchase_order_no.compareTo(j.purchase_order_no);
 		}};
+		
+		Comparator<ARCmItemInventory> clpo = new Comparator<ARCmItemInventory>(){
+			
+			@Override
+			public int compare(ARCmItemInventory i,ARCmItemInventory j) {
+				
+				return j.purchase_order_no.compareTo(i.purchase_order_no);
+			}};
 	    Comparator<ARCmItemInventory> compare_po_with_remains = new Comparator<ARCmItemInventory>(){
 			
 			@Override
@@ -165,7 +176,7 @@ public class APPc005 extends ACFaAppController {
         model.addAttribute("locationcode", LocationService.getLocationCode());
         model.addAttribute("programmeno", ProgrammeMasterService.getProgNamePairs());
         model.addAttribute("groupno", GroupService.getGroupNamePairs());
-        model.addAttribute("LabourTypeselect", LabourTypeService.getAllEffLabourType());
+        model.addAttribute("LabourTypeselect", LabourTypeService.getAllEffLabourType_4_paintshop());
         model.addAttribute("businessDepartment", BusinessPlatformService.getAllBusinessDepartmentValue());
         model.addAttribute("BusinessPlatform", BusinessPlatformService.getBBusinessPlatform());
         model.addAttribute("Department", BusinessPlatformService.getBDepartment());
@@ -227,7 +238,7 @@ public class APPc005 extends ACFaAppController {
         ACFdSQLAssSelect select = new ACFdSQLAssSelect(); 
       //  select.setCustomSQL("");
       
-        select.setCustomSQL("select m.*, m.unit_cost as other_material_amount from arc_wp_other_material_consumption m");
+        select.setCustomSQL("select m.* from arc_wp_other_material_consumption m");
         select.setKey("consumption_form_no");
         select.wheres.and("consumption_form_no", consumption_form_no);
         //select.orders.put("seq", true);
@@ -256,10 +267,18 @@ public class APPc005 extends ACFaAppController {
     @ResponseBody
     public ACFgResponseParameters save(@RequestBody ACFgRequestParameters param) throws Exception { //function in the upper right "save" button
       //the controller obtains the changes of form data 
-        List<ARCmWPConsumptionHeader> amendments = param.getList("form", ARCmWPConsumptionHeader.class);
-        final List<ARCmWPConsumptionItem> Itemamendments = param.getList("Item", ARCmWPConsumptionItem.class);
+    	final List<ARCmWPConsumptionHeader> amendments = param.getList("form", ARCmWPConsumptionHeader.class);
+    	final List<ARCmWPConsumptionItem> Itemamendments = param.getList("Item", ARCmWPConsumptionItem.class);
         final List<ARCmWPOtherMaterialConsumption> Materialamendments = param.getList("Material", ARCmWPOtherMaterialConsumption.class);
         final List<ARCmWPLabourConsumption> Labouramendments = param.getList("Labour", ARCmWPLabourConsumption.class);
+        System.out.println("testing insert ARCmWPConsumptionItem ********************" + Itemamendments);
+		System.out.println("testing insert ARCmWPConsumptionHeader ********************" + amendments);
+//		amendments.get(0).set(columnName, value)
+		//set ARCmWPConsumptionItem's C.F.No here
+		
+		
+	
+		
         //and call DAO to save the changes
         ARCmWPConsumptionHeader lastItem = WPconsumptionHeaderDao.saveItems(amendments, new ACFiSQLAssWriteInterface<ARCmWPConsumptionHeader>(){
             
@@ -278,23 +297,35 @@ public class APPc005 extends ACFaAppController {
 										@Override
 										public boolean insert(ARCmWPConsumptionItem newItem,ACFdSQLAssInsert ass)throws Exception {
 											// TODO Auto-generated method stub
+											System.out.println("testing insert newItem ********************" + newItem);
+											List<ARCmItemInventory> lsc = ItemInventoryDao.selectItems(newItem.item_no);
 											
+											
+											//if ((data.item[0].material_type == "2") && (data.item[0].item_no.substring(3,7) != "9999"))
+											for (ARCmItemInventory II : lsc)
+ 											{
+												if(!II.item_no.substring(3,7).equals("9999") && ItemMasterDao.selectItem(II.item_no).material_type.equals("2"))
+												{
+													throw exceptionService.error("APP505E"); //The last 4 digits of report category item must be "9999" for consumption
+												}
+ 											}
 											//consumption quantity must not be smaller than 0
 											int cq = newItem.consumption_quantity.intValue();
- 											if (cq < 0)
+ 											if (cq < 0 && newItem.re_used_indicator.equals("0"))
 											{
 												throw exceptionService.error("APP105E");
 											}
  											
- 											//consumption quantity not equals to 0
+ 											//consumption quantity not equals to 0 re_used_indicator == 1 situation has automatically been neglected.
  											if (cq > 0 && newItem.re_used_indicator.equals("0"))
  											{
  											List<ARCmItemInventory> ls = ItemInventoryDao.selectItems(newItem.item_no);
- 										
+ 											
  											System.out.println("------testing item list---------------");
- 											int rqs = 0;
+ 											int rqs = 0;//remained quantity summation
  											for (ARCmItemInventory II : ls)
  											{
+ 												
  												System.out.println(II);
  												System.out.println(II.purchase_order_no);
  												rqs += APPc006.get_remaining(II); //remaining 
@@ -312,36 +343,107 @@ public class APPc005 extends ACFaAppController {
  											
  											
  											List<ARCmItemInventory> Invitems = APPc006.filter(ls);
+// 											WPconsumptionItemDao.deleteItem(newItem); //delete already inserted 'newitem'
  											do // consumption from inventory
 											{	
  												Invitems = APPc006.filter(Invitems);
-												ARCmItemInventory mininv = Collections.min(Invitems,cii);
+// 												ARCmWPConsumptionItem consitems = newItem.getClass().newInstance();
+ 												
+ 												
+ 												ARCmWPConsumptionItem consitems = new ARCmWPConsumptionItem();
+ 												consitems.account_allocation = newItem.account_allocation;
+ 												consitems.consumption_form_no = newItem.consumption_form_no;
+// 												consitems.consumption_quantity = newItem.consumption_quantity;
+ 												consitems.input_date = newItem.input_date;
+ 												consitems.item_no = newItem.item_no;
+ 												consitems.programme_no = newItem.programme_no;
+ 												consitems.purchase_order_no = newItem.purchase_order_no;
+ 												consitems.re_used_indicator = newItem.re_used_indicator;
+ 												consitems.unit_cost = newItem.unit_cost;
+ 												consitems.created_at = newItem.created_at;
+ 												consitems.created_by = newItem.created_by;
+ 												consitems.modified_at = newItem.modified_at;
+ 												consitems.modified_by = newItem.modified_by;
+ 												
+ 												
+ 												
+												ARCmItemInventory mininv = Collections.min(Invitems,cii);//compares PO number
  												
  												if(cq <=APPc006.get_remaining(mininv))
  												{
+// 												newItem.consumption_quantity = new BigDecimal(cq);
+ 												//dangerous!! the following line's function was extracted from Dennis's memory, not document!!
+ 												ass.columns.put("consumption_quantity", new BigDecimal(cq));
+ 												
+ 												
+ 	 						            		System.out.println("cq <= APPc006.get_remaining(mininv) testing newItem.consumption_quantity ********" + newItem.consumption_quantity);
+// 	 						            		newItem.purchase_order_no = mininv.purchase_order_no;
+ 	 						            			
+ 													
  												mininv.consumed_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + cq);
  						            			cq = 0;
  						            			ItemInventoryDao.updateItem(mininv);
+// 						            			consitems.purchase_order_no = mininv.purchase_order_no;
+ 						            			
+ 						            			//delete already inserted 'newitem'
+ 						            			//then insert modified 'newitem'
+// 						            			WPconsumptionItemDao.insertItem(newItem);
  												}
  												
  												if(cq > APPc006.get_remaining(mininv))
  						            			{
  						            			//mininv.adjusted_quantity = new BigDecimal(0);
- 						            			cq = cq - APPc006.get_remaining(mininv);
+ 													
+ 												//assign the consumed remaining items to a new record container consitems
+ 													
+ 													Integer remain = APPc006.get_remaining(mininv);
+ 												//converting to big decimal without toString can be dangerous https://stackoverflow.com/questions/16216248/convert-java-number-to-bigdecimal-best-way
+ 													
+ 													consitems.consumption_quantity = new BigDecimal(remain.toString());
+ 												System.out.println("testing************************APPc006.get_remaining(mininv)" + APPc006.get_remaining(mininv));
+ 												System.out.println("testing************************consitems.consumption_quantity" + consitems.consumption_quantity);
+ 												System.out.println("testing************************remain.toString()" + remain.toString());
+ 												
+ 												//renew the consuming quantity after deduction
+ 						            			cq = cq - remain;
  						                			
+ 						            			//assign the consuming quantity after deduction to new item container
+// 						                		newItem.consumption_quantity = new BigDecimal(cq); //!! consitems and newItem may pointing the same object!
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing APPc006.get_remaining(mininv)*********" + APPc006.get_remaining(mininv));
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing newItem.consumption_quantity **********" 
+ 						                		+ newItem.consumption_quantity);
+ 						                		System.out.println("cq > APPc006.get_remaining(mininv) testing consitems.consumption_quantity *********" +
+ 						                		consitems.consumption_quantity);
+ 						                		consitems.unit_cost = mininv.unit_cost;
+ 						                		consitems.purchase_order_no = mininv.purchase_order_no;
+ 						                		
+ 						                		
+ 						                		
+ 						                		//update inventory record in loop
+ 						            			
+ 						            			
+ 						            			WPconsumptionItemDao.insertItem(consitems);
+ 						            			
+ 						            			
  						                		mininv.consumed_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + APPc006.get_remaining(mininv)); //set remaining to zero
  						                			
- 						                			
- 						            			//update inventory record in loop
+// 						                		consitems.consumption_quantity = new BigDecimal(cq);
+ 						                		
+ 						                		
  						            			ItemInventoryDao.updateItem(mininv);
+ 						            			
+ 						            			//don't just update inventory here, update 'ITEM LIST' in appf005 
+// 						            			WPconsumptionItemDao.updateItem(consitems);
  						            			}
 											}
 												//once consumption is finished, break the loop
 												while (cq != 0);
- 											
+ 												System.out.println("testing new item at the end of insert ********************" + newItem.consumption_quantity);
  											}
  											
 // 											System.out.println(ls.get(1));
+// 											newItem.consumption_quantity = new BigDecimal(999);
+ 											
  											return false;
 										}
 										// the following should also happen when insert
@@ -702,10 +804,20 @@ public class APPc005 extends ACFaAppController {
 											{
 												//throw exceptionService.error("APP105E");
  												List<ARCmItemInventory> ls = ItemInventoryDao.selectItems(newItem.item_no);
- 												List<ARCmItemInventory> Invitems = APPc006.filter(ls);
-												ARCmItemInventory mininv = Collections.min(Invitems,cii);
-												mininv.consumed_quantity = new BigDecimal(mininv.consumed_quantity.intValue() + cq);//add back the error consumed difference
-												ItemInventoryDao.updateItem(mininv);
+// 												List<ARCmItemInventory> Invitems = APPc006.filter(ls);
+// 												if (APPc006.get_remaining(Collections.min(ls,clpo)) == 0) //if there is nothing remain in the latest PO of the item
+//												{
+//												ARCmItemInventory maxpo = Collections.min(ls,clpo); //get the latest PO object
+//												maxpo.consumed_quantity = new BigDecimal(maxpo.consumed_quantity.intValue() + cq);//add up the regret
+//												ItemInventoryDao.updateItem(maxpo);
+//												}
+// 												if (APPc006.get_remaining(Collections.min(ls,clpo)) != 0) //if there is still something remain in the latest PO of the item
+//												{
+ 												ARCmItemInventory maxpo = Collections.min(ls,clpo); //get the latest PO object
+												maxpo.consumed_quantity = new BigDecimal(maxpo.consumed_quantity.intValue() + cq);//add up the regret
+												ItemInventoryDao.updateItem(maxpo);
+//												}
+												
 											}
  											
  											//consumption quantity not equals to 0
@@ -781,6 +893,7 @@ public class APPc005 extends ACFaAppController {
                             	
                             		});
                         if (Materialamendments != null)
+                        	System.out.println("testing ********************material lists new item Amount" + Materialamendments);
                             OtherMaterialConsumptionDao.saveItems(Materialamendments);
                         if (Labouramendments != null)
                             WPLabourConsumptionDao.saveItems(Labouramendments);

@@ -760,6 +760,8 @@ $(document).on('view', function() {
 $(document).on("clone", function() {
 
 $("#grid_item").pGrid$copyRecord();
+$("#frm_main #printed_by").setValue("");
+$("#frm_main #purchase_order_date").setValue("");
 
 });
 
