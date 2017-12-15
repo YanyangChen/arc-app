@@ -9,7 +9,7 @@
 			<a href="#" onClick="$(this).parents('.widget-box').pForm$clear();">Clear</a>
 		</acf:RegionAction>
 		<form id="frm_search" class="form-horizontal" data-role="search">
-	    	<div class="form-group">
+	    	<div class="form-group">Reference Unit Cost:
 	      		<div class="col-lg-2 col-md-2 col-sm-2 col-xs-3">
 	      			<label for=s_mod_id style="display:block">Item No/Cat.</label>
 	      			<acf:ComboBox id="s_item_no" name="item_no" editable="true" multiple="false">
@@ -57,7 +57,42 @@
     	<div class="col-xs-12 form-padding oneline">
      		<label class="control-label col-md-2" for="item_no">Item No.:</label>
       		<div class="col-md-1">    
-      			<acf:TextBox id="item_no" name="item_no" maxlength="7" checkMandatory="true"/>
+      			<acf:TextBox id="item_no" name="item_no" maxlength="7" checkMandatory="true">
+      			<acf:Bind on="change"><script>
+	 					item_no = $("#frm_main #item_no").getValue(); //this bloack is the same as onLoadSucess except $this value
+   						
+   						
+   						
+   						if (item_no == ""){
+   							//$("#frm_main #supplier_desc").setValue("");	
+   						}
+   						else {	
+   						//if($("#frm_main #reference_unit_cost").getValue() != 0){				
+	   						$.ajax({
+								headers: {
+									'Accept'       : 'application/json',
+									'Content-Type' : 'application/json; charset=utf-8'
+								},
+								async  : false,
+								type   : "POST",
+								url    : "${ctx}/arc/app/appf001/appf001-get-reference-price.ajax",
+								data   : JSON.stringify({
+									'item_no'	: item_no,
+								}),
+								success: function(data) {
+									if (data.unit_cost != null) {
+										$("#frm_main #reference_unit_cost").setValue(data.unit_cost);
+										if (data.unit_cost == '') $("#frm_main #reference_unit_cost").setValue(0.00);
+									}
+									else {
+										$("#frm_main #reference_unit_cost").setValue(0.00);
+									}
+								}
+							});
+   						}
+   						//}
+	 				</script></acf:Bind>
+      			     </acf:TextBox>
       			     
       		</div>
     	
@@ -128,42 +163,8 @@
     	<div class="col-xs-12 form-padding oneline">
      		<label class="control-label col-md-2" for="reference_unit_cost">Reference Unit Cost:</label>
       		<div class="col-md-2">    
-      			<acf:TextBox id="reference_unit_cost" name="reference_unit_cost" readonly="true">
-      			<acf:Bind on="change"><script>
-	 					item_no = $("#frm_main #item_no").getValue(); //this bloack is the same as onLoadSucess except $this value
-   						
-   						
-   						
-   						if (item_no == ""){
-   							//$("#frm_main #supplier_desc").setValue("");	
-   						}
-   						else {	
-   						//if($("#frm_main #reference_unit_cost").getValue() != 0){				
-	   						$.ajax({
-								headers: {
-									'Accept'       : 'application/json',
-									'Content-Type' : 'application/json; charset=utf-8'
-								},
-								async  : false,
-								type   : "POST",
-								url    : "${ctx}/arc/app/appf001/appf001-get-reference-price.ajax",
-								data   : JSON.stringify({
-									'item_no'	: item_no,
-								}),
-								success: function(data) {
-									if (data.unit_cost != null) {
-										$("#frm_main #reference_unit_cost").setValue(data.unit_cost);
-										if (data.unit_cost == '') $("#frm_main #reference_unit_cost").setValue(0.00);
-									}
-									else {
-										$("#frm_main #reference_unit_cost").setValue(0.00);
-									}
-								}
-							});
-   						}
-   						//}
-	 				</script></acf:Bind>
-      			     </acf:TextBox>
+      			<acf:TextBox id="reference_unit_cost" name="reference_unit_cost" readonly="true"/>
+      			
       		</div>
     	</div> 
     	

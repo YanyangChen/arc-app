@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 
+
 //import cal.apm.Controller.APMc101.SearchProdMember;
 //import cal.exe.Model.EXEmFunction;
 import acf.acf.Abstract.ACFaAppController;
@@ -160,8 +161,6 @@ public class APPc003 extends ACFaAppController {
     @RequestMapping(value=APPtMapping.APPF003_SEARCH_AJAX, method=RequestMethod.POST)
     @ResponseBody
      public ACFgResponseParameters getGrid(@RequestBody ACFgRequestParameters param) throws Exception {
-          //The method getGrid responds to AJAX by obtain the Search JSON result and put in variable “grid_browse”.
-            // ACF will forward the content to client and post to the grid which ID equals to “grid_browse”.
             search.setConnection(getConnection("ARCDB")); //get connection to the database
             search.setValues(param);
             search.setFocus(purchase_order_no);
@@ -236,7 +235,7 @@ public class APPc003 extends ACFaAppController {
 								                        	   ARCmItemInventory is =new ARCmItemInventory();
 								                         	is.item_no = newItem.item_no;
 								                         	is.purchase_order_no = newItem.purchase_order_no;
-								                         	is.purchase_order_date = amendments.get(0).purchase_order_date;
+								                         	is.purchase_order_date = newItem.created_at;
 								                         	is.order_quantity = newItem.order_quantity;
 								                         	is.received_quantity = new BigDecimal(0);
 								                         	is.current_received_quantity = new BigDecimal(0);
@@ -267,7 +266,7 @@ public class APPc003 extends ACFaAppController {
 							                         public void callback() throws Exception {
 														 List<ARCmItemInventory> ls =new ArrayList<ARCmItemInventory>() ;
 														 List<ARCmItemInventory> lso =new ArrayList<ARCmItemInventory>() ;
-								                          
+														 
 								                        	   ARCmItemInventory  uso = ItemInventoryDao.selectItem(oldItem.item_no, amendments.get(0).purchase_order_no);
 								                        	   uso.setVersion(1);
 								                        	   uso.setAction(2);
@@ -275,7 +274,7 @@ public class APPc003 extends ACFaAppController {
 								                        	   ARCmItemInventory us =new ARCmItemInventory();
 								                         	us.item_no = newItem.item_no;
 								                         	us.purchase_order_no = newItem.purchase_order_no;
-								                         	us.purchase_order_date = amendments.get(0).purchase_order_date;
+								                         	us.purchase_order_date = newItem.modified_at;
 								                         	us.order_quantity = newItem.order_quantity;
 								                         	us.received_quantity = new BigDecimal(0);
 								                         	us.current_received_quantity = new BigDecimal(0);
@@ -312,18 +311,7 @@ public class APPc003 extends ACFaAppController {
 														}
 														
 														ItemInventoryDao.deleteItem(ItemInventoryDao.selectItem(oldItem.item_no, newItem.purchase_order_no));
-								                        	   
-								                           
-								                           
-								                        	   
-								                        		   
-								                        		   
-								                        			  
-								                        	   //ItemInventoryDao.deleteItem(ns);
-//								                         	//ItemInventoryDao.insertOrUpdateItem(s); //disable save action first
-//								                         	System.out.println("Object--------------index" + x + "----------------version:" + s.getVersion() + "-----------action" + s.getAction()+ "-------------item_no" + s.item_no);
-								                           
-								                           
+	
 													}
 													});
 												return false;
@@ -331,55 +319,7 @@ public class APPc003 extends ACFaAppController {
                                 	 
                                 	 
                                 		 });
-//                             if (PoItemamendments != null){
-//                             List<ARCmPODetails> PoItemamendments2 = PoItemamendments;
-//                             	for (int x=0; x<PoItemamendments2.size(); x++)
-//                             	{PoItemamendments2.get(x).purchase_order_no = amendments.get(0).purchase_order_no;}
-//                             	
-//                                 PODetailsDao.saveItems(PoItemamendments2);
-//                             if (amendments != null)
-//                             	POHeaderDao.saveItems(amendments);
-                             	
-                             //ItemInventoryDao.saveItems(s);
-                             	
-//                             
-                             
-                           
-                             {
-//                            	 if (x % 2 == 0) //amend mode have two elements for one Item. one is old one is new, this doesn't matter here
-//                            	 {
-                            	 
-                            	 
-                            	 
-                            //if record does not existed in item_inventory
-                         //  if  (ItemInventoryDao.selectItem(PoItemamendments2.get(x).item_no, amendments.get(0).purchase_order_no)==null)
-                          // {
-                        	// }
-////                         
-                           //else
-                          // {
-//                        	   ARCmItemInventory ns = ItemInventoryDao.selectItem(PoItemamendments2.get(x).item_no, amendments.get(0).purchase_order_no);
-//                        	   ARCmItemInventory s =new ARCmItemInventory();
-//                            	s.item_no = ns.item_no;
-//                            	s.purchase_order_no = ns.purchase_order_no;
-//                            	s.purchase_order_date = ns.purchase_order_date;
-//                            	s.order_quantity = PoItemamendments2.get(x).order_quantity;
-//                            	s.received_quantity = ns.received_quantity;
-//                            	s.current_received_quantity = ns.current_received_quantity;
-//                            	s.receive_date = ns.receive_date;
-//                            	s.consumed_quantity = ns.consumed_quantity;
-//                            	s.adjusted_quantity = ns.adjusted_quantity;
-//                            	s.back_order_quantity = ns.back_order_quantity;
-//                            	s.current_back_order_quantity = ns.current_back_order_quantity;
-//                            	s.unit_cost = PoItemamendments2.get(x).unit_cost;
-//                            	//ItemInventoryDao.insertOrUpdateItem(s);//disable save action first
-//                            	System.out.println("Object--------------index" + x + "----------------version:" + s.getVersion() + "-----------action" + s.getAction()+ "-------------item_no" + s.item_no);
-////                            	ItemInventoryDao.updateItem(oldItem, newItem)
-                            	
-                           //}
-                           //  }
-//                         	
-                             }
+
 						}
                            
                          
@@ -389,17 +329,39 @@ public class APPc003 extends ACFaAppController {
                 }
                
 
-                @Override
-                public boolean update(ARCmPOHeader oldItem, ARCmPOHeader newItem, ACFdSQLAssUpdate ass) throws Exception {
+              
+				@Override
+                public boolean update(  ARCmPOHeader oldItem,  ARCmPOHeader newItem,   ACFdSQLAssUpdate ass) throws Exception {
                 	// validate(newItem);
-                	
+                	System.out.println("testing****************************************amendments.get(0).purchase_order_no" + amendments.get(0).purchase_order_no);
+                	 ACFdSQLAssSelect select = new ACFdSQLAssSelect();
+                     select.setCustomSQL("select * from arc_item_inventory where purchase_order_no = '%s'", amendments.get(0).purchase_order_no);
+                     select.setKey("purchase_order_no");
+//                     select.wheres.and("purchase_order_no");
+                     List<ACFgRawModel> inv_result = select.executeQuery(getConnection("ARCDB"));
+                     //if iterate all results and the received items are all 0
+                     int inventory_received = 0;
+                     for (ACFgRawModel each : inv_result){
+                    	 if(each.getBigDecimal("received_quantity").intValue() !=0){
+                    		 inventory_received += each.getBigDecimal("received_quantity").intValue();
+                    	 }
+                     }
+                     System.out.println("inventory_received are ********************" + inventory_received);
+                	if (oldItem.cancel_indicator.equals("N") && newItem.cancel_indicator.equals("Y") && inventory_received != 0)
+	               	 {
+	               		 ass.columns.put("cancel_by", SecurityService.getCurrentUser().user_id);
+	               		 ass.columns.put("cancel_date",  ACFtUtility.now());
+	               		System.out.println("test**************canceled_by and canceled_date scripts entered");
+	               		
+	               	 }
                      ass.setAfterExecute(new ACFiCallback() {
                         // @SuppressWarnings("null")
 						@Override
                          public void callback() throws Exception {
 							 final List<ARCmPODetails> PoItemamendments2 = PoItemamendments;
 							 final ARCmItemInventory s =new ARCmItemInventory();
-                             if (PoItemamendments != null)
+								
+                             if (PoItemamendments.size() != 0)
                             	 
                                  PODetailsDao.saveItems(PoItemamendments,  new ACFiSQLAssWriteInterface<ARCmPODetails>() //function with inner class, object created once for processing
                                 		 
@@ -416,7 +378,7 @@ public class APPc003 extends ACFaAppController {
 								                        	   ARCmItemInventory is =new ARCmItemInventory();
 								                         	is.item_no = newItem.item_no;
 								                         	is.purchase_order_no = amendments.get(0).purchase_order_no;
-								                         	is.purchase_order_date = amendments.get(0).purchase_order_date;
+								                         	is.purchase_order_date = newItem.created_at;
 								                         	is.order_quantity = newItem.order_quantity;
 								                         	is.received_quantity = new BigDecimal(0);
 								                         	is.current_received_quantity = new BigDecimal(0);
@@ -455,7 +417,7 @@ public class APPc003 extends ACFaAppController {
 								                        	   ARCmItemInventory us =new ARCmItemInventory();
 								                         	us.item_no = newItem.item_no;
 								                         	us.purchase_order_no = newItem.purchase_order_no;
-								                         	us.purchase_order_date = uso.purchase_order_date;
+								                         	us.purchase_order_date = newItem.modified_at;
 								                         	us.order_quantity = newItem.order_quantity;
 								                         	us.received_quantity = uso.received_quantity;
 								                         	us.current_received_quantity = uso.current_received_quantity;
@@ -469,6 +431,7 @@ public class APPc003 extends ACFaAppController {
 								                         	us.setAction(2);
 								                         	//ls.add(us);
 								                         	 ItemInventoryDao.updateItem(uso,us);
+								                         	 
 								                         	//ItemInventoryDao.insertOrUpdateItem(s); //disable save action first
 								                         	
 								                          

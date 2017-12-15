@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+
 
 
 
@@ -285,7 +287,7 @@ public class APPc005 extends ACFaAppController {
             
             //interface for the related functions
             @Override
-            public boolean insert(ARCmWPConsumptionHeader newItem, ACFdSQLAssInsert ass) throws Exception {
+            public boolean insert(final ARCmWPConsumptionHeader newItem, ACFdSQLAssInsert ass) throws Exception {
                 //ass.columns.put("allow_print", 1); //without the allow_print column, the whole sql won't work
                 ass.setAfterExecute(new ACFiCallback() {
                     @Override
@@ -523,10 +525,28 @@ public class APPc005 extends ACFaAppController {
 										}
                             	
                             		});
-                       if (Materialamendments != null)
-                            OtherMaterialConsumptionDao.saveItems(Materialamendments);
-                        if (Labouramendments != null)
-                            WPLabourConsumptionDao.saveItems(Labouramendments);
+                       String global_cfn =  newItem.consumption_form_no;
+                       List<ARCmWPOtherMaterialConsumption> Materialamendments2 = new ArrayList<ARCmWPOtherMaterialConsumption>();
+                       for (ARCmWPOtherMaterialConsumption each : Materialamendments)
+                       {
+                    	   each.consumption_form_no = global_cfn;
+                    	   Materialamendments2.add(each);
+                    	   
+                       }
+                       if (Materialamendments2.size() != 0)
+                            OtherMaterialConsumptionDao.saveItems(Materialamendments2);
+                       
+                       
+                       global_cfn =  newItem.consumption_form_no;
+                       List<ARCmWPLabourConsumption> Labouramendments2 = new ArrayList<ARCmWPLabourConsumption>();
+                       for (ARCmWPLabourConsumption each : Labouramendments)
+                       {
+                    	   each.consumption_form_no = global_cfn;
+                    	   Labouramendments2.add(each);
+                    	   
+                       }
+                        if (Labouramendments2.size() != 0)
+                            WPLabourConsumptionDao.saveItems(Labouramendments2);
                  
                     }
                 });

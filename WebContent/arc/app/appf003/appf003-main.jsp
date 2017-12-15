@@ -529,36 +529,36 @@ Controller.setOption({
 							cancel_indicator = $("#frm_main #cancel_indicator").getValue(); //this block is the same as onLoadSucess except $this value
    							 purchase_order_no = $("#frm_main #purchase_order_no").getValue();
    							 
-   						if (cancel_indicator == "N"){
-   							//$("#frm_main #supplier_desc").setValue("");	
-   							setTimeout(function(){
-	   							$.ajax({
-									headers: {
-										'Accept'       : 'application/json',
-										'Content-Type' : 'application/json; charset=utf-8'
-									},
-									async  : false,
-									type   : "POST",
-									url    : "${ctx}/arc/app/app-get-pono-in-inv.ajax",
-									data   : JSON.stringify({
-										'purchase_order_no'	: purchase_order_no,
-									}),
-									success: function(data) {
-									var pono = data.inv;
-									console.log(data.inv);
-									console.log(purchase_order_no);
-										if (pono == purchase_order_no) {
-										console.log(123);
-											$("#frm_main #cancel_indicator").disable();
-										}
-										else {
-											//$("#frm_main #cancel_ind").enable();
-										}
-									}
-								});
-   							},100);				
+//    						if (cancel_indicator == "N"){
+//    							//$("#frm_main #supplier_desc").setValue("");	
+//    							setTimeout(function(){
+// 	   							$.ajax({
+// 									headers: {
+// 										'Accept'       : 'application/json',
+// 										'Content-Type' : 'application/json; charset=utf-8'
+// 									},
+// 									async  : false,
+// 									type   : "POST",
+// 									url    : "${ctx}/arc/app/app-get-pono-in-inv.ajax",
+// 									data   : JSON.stringify({
+// 										'purchase_order_no'	: purchase_order_no,
+// 									}),
+// 									success: function(data) {
+// 									var pono = data.inv;
+// 									console.log("this is inv in load" + data.inv);
+// 									console.log(purchase_order_no);
+// 										if (pono == purchase_order_no) {
+// 										console.log(123);
+// 											$("#frm_main #cancel_indicator").disable();
+// 										}
+// 										else {
+// 											//$("#frm_main #cancel_ind").enable();
+// 										}
+// 									}
+// 								});
+//    							},10);				
 	   						
-   						}
+//    						}
    						//}
 	
 	//$("#frm_main #supplier_desc").setValue("1");
@@ -672,7 +672,7 @@ $(document).on('amend', function() {
 	{
 	$("#mod_main #cancel_date").disable();	
 	}
-	else if ($("#mod_main #cancel_indicator").getValue() == "N")
+	else if ($("#mod_main #cancel_indicator").getValue() != "Y")
 	{
 	$("#mod_main #cancel_date").enable();	
 	}
@@ -690,10 +690,10 @@ $(document).on('amend', function() {
 										'purchase_order_no'	: purchase_order_no,
 									}),
 									success: function(data) {
-									var pono = data.inv;
-									console.log(data.inv);
+									var total_received = data.inv;
+									console.log("this is inv in amend" + data.inv);
 									console.log(purchase_order_no);
-										if (pono == purchase_order_no) {
+										if (total_received > 0) {
 										console.log(123);
 											$("#frm_main #cancel_indicator").disable();  // inventory found --> cannot not cancel
 										}
