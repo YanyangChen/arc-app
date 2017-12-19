@@ -21,7 +21,24 @@
 	    	
 	      		<div class="col-lg-2 col-md-2 col-sm-2 col-xs-3">
 	      			<label for=programme_no style="display:block">Programme No.</label>
-	      			<acf:TextBox id="s_programme_no" name="programme_no" editable="true" maxlength="9"/>  
+	      			<acf:TextBox id="s_programme_no" name="programme_no" button="fa-search" maxlength="9" allowKey="[tT0-9]" forceCase="upper" format="(T[0-9]{8}|[0-9]{1,9})"> 
+	      		<acf:Bind target="button" on="click"><script>
+	      					programme_no = null;
+		   		    		Dialog.create()
+								.setCaption("Search")
+								.setWidth(1000)
+								.addDismissButton("OK", function(){
+									if ($.type(programme_no) == "string"){
+										$("#frm_search #s_programme_no").setValue(programme_no);
+										programme_no = "";
+									}
+								})
+								.setResultCallback(function(result) {
+									programme_no = result.programme_no;
+								})
+								.showUrl("../../apf/apff011/apff011-search-arc-prog");
+	   					</script></acf:Bind>
+	   					</acf:TextBox>
 	      		</div>
 	      		
 	      		
@@ -161,10 +178,25 @@
     	<div class="col-xs-12 form-padding">
      		<label class="control-label col-md-2" for="programme_no">Programme No.:</label>
       		<div class="col-md-3">
-      			<acf:ComboBox id="programme_no" name="programme_no" maxlength="9" checkMandatory="true">
-      			<acf:Bind on="initData"><script>
-	 					$(this).acfComboBox("init", ${programmeno} );
-	 				</script></acf:Bind>
+      			<label class="control-label col-md-2" for="programme_no">Programme No.:</label>
+      		<div class="col-md-3">
+      			<acf:TextBox id="programme_no" name="programme_no" button="fa-search" maxlength="9" allowKey="[tT0-9]" forceCase="upper" format="(T[0-9]{8}|[0-9]{1,9})"> 
+	      		<acf:Bind target="button" on="click"><script>
+	      					programme_no = null;
+		   		    		Dialog.create()
+								.setCaption("Search")
+								.setWidth(1000)
+								.addDismissButton("OK", function(){
+									if ($.type(programme_no) == "string"){
+										$("#frm_main #programme_no").setValue(programme_no);
+										programme_no = "";
+									}
+								})
+								.setResultCallback(function(result) {
+									programme_no = result.programme_no;
+								})
+								.showUrl("../../apf/apff011/apff011-search-arc-prog");
+	   					</script></acf:Bind>
       			<acf:Bind on="change"><script>
 				var programme_no = $(this).getValue();
 				
@@ -202,7 +234,7 @@
 							//}
 				</script>
 				</acf:Bind>
-				</acf:ComboBox>
+			</acf:TextBox>
       				
       			   
         	</div>

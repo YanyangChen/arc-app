@@ -907,7 +907,37 @@ public class APPc005 extends ACFaAppController {
 										@Override
 										public boolean delete(ARCmWPConsumptionItem oldItem,ACFdSQLAssDelete ass)throws Exception {
 											// TODO Auto-generated method stub
+											int cq;
+											cq = oldItem.consumption_quantity.intValue();
 											
+										
+											ARCmItemInventory left = ItemInventoryDao.selectItem(oldItem.item_no, oldItem.purchase_order_no);
+											
+											
+											//if related item po in inventory still have remains
+											
+												//add to the item po
+											
+											if (cq > 0  && (oldItem.re_used_indicator.equals("0")) &&  APPc006.get_remaining(left) != 0 )
+											{
+												left.consumed_quantity = new BigDecimal(left.consumed_quantity.intValue() + cq);//add up the regret
+												ItemInventoryDao.updateItem(left);
+												
+											}
+											
+											//if related item po in inventory has been consumed
+											
+												//then add to the latest po
+											if (cq > 0  && (oldItem.re_used_indicator.equals("0")) &&  APPc006.get_remaining(left) == 0 )
+											{
+												
+ 												List<ARCmItemInventory> ls = ItemInventoryDao.selectItems(oldItem.item_no);
+ 												ARCmItemInventory maxpo = Collections.min(ls,clpo); //get the latest PO object
+												maxpo.consumed_quantity = new BigDecimal(maxpo.consumed_quantity.intValue() + cq);//add up the regret
+												ItemInventoryDao.updateItem(maxpo);
+//												}
+												
+											}
 											return false;
 										}
                             	
@@ -925,6 +955,7 @@ public class APPc005 extends ACFaAppController {
 
             @Override
             public boolean delete(ARCmWPConsumptionHeader oldItem, ACFdSQLAssDelete ass) throws Exception {
+            	
                 return false;
             }
         });

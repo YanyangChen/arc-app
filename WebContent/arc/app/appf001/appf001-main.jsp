@@ -9,7 +9,7 @@
 			<a href="#" onClick="$(this).parents('.widget-box').pForm$clear();">Clear</a>
 		</acf:RegionAction>
 		<form id="frm_search" class="form-horizontal" data-role="search">
-	    	<div class="form-group">Reference Unit Cost:
+	    	<div class="form-group">
 	      		<div class="col-lg-2 col-md-2 col-sm-2 col-xs-3">
 	      			<label for=s_mod_id style="display:block">Item No/Cat.</label>
 	      			<acf:ComboBox id="s_item_no" name="item_no" editable="true" multiple="false">
